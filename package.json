@@ -1,0 +1,17 @@
+{
+  "name": "mini-job-system",
+  "version": "1.0.0",
+  "description": "Small in-memory distributed job system: Client -> Scheduler -> Workers over gRPC",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "scheduler": "node bin/scheduler.js",
+    "worker": "node bin/worker.js",
+    "cli": "node bin/cli.js",
+    "demo": "node demo.js"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.12.2",
+    "@grpc/proto-loader": "^0.7.13"
+  }
+}

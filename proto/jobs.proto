@@ -1,0 +1,87 @@
+syntax = "proto3";
+package jobs;
+
+enum JobState {
+  UNSPECIFIED = 0;
+  PENDING     = 1;
+  RUNNING     = 2;
+  SUCCEEDED   = 3;
+  FAILED      = 4;
+  CANCELLED   = 5;
+}
+
+message JobSpec {
+  string type         = 1;
+  string payload      = 2;
+  int32  max_attempts = 3;
+  int32  timeout_ms   = 4;
+}
+
+message Job {
+  string   id          = 1;
+  JobSpec  spec        = 2;
+  JobState state       = 3;
+  int32    attempts    = 4;
+  string   worker      = 5;
+  string   result      = 6;
+  string   error       = 7;
+  int64    created_at  = 8;
+  int64    started_at  = 9;
+  int64    finished_at = 10;
+}
+
+service Scheduler {
+  rpc SubmitJob (SubmitJobRequest)  returns (SubmitJobResponse);
+  rpc GetJob    (GetJobRequest)     returns (Job);
+  rpc ListJobs  (ListJobsRequest)   returns (ListJobsResponse);
+  rpc CancelJob (CancelJobRequest)  returns (CancelJobResponse);
+  rpc Status    (StatusRequest)     returns (StatusResponse);
+}
+
+message SubmitJobRequest  { JobSpec spec = 1; }
+message SubmitJobResponse { string id = 1; }
+message GetJobRequest     { string id = 1; }
+message ListJobsRequest   { JobState state = 1; int32 limit = 2; }
+message ListJobsResponse  { repeated Job jobs = 1; }
+message CancelJobRequest  { string id = 1; }
+message CancelJobResponse { bool cancelled = 1; JobState state = 2; }
+message StatusRequest     {}
+
+message WorkerInfo {
+  string address   = 1;
+  bool   healthy   = 2;
+  int32  inflight  = 3;
+  int32  capacity  = 4;
+  int32  completed = 5;
+}
+
+message StatusResponse {
+  repeated WorkerInfo workers = 1;
+  map<string, int32> job_counts = 2;
+  int32 queue_depth = 3;
+}
+
+service Worker {
+  rpc Execute (ExecuteRequest) returns (ExecuteResponse);
+  rpc Cancel  (CancelRequest)  returns (CancelResponse);
+  rpc Ping    (PingRequest)    returns (PingResponse);
+}
+
+message ExecuteRequest {
+  string job_id     = 1;
+  string type       = 2;
+  string payload    = 3;
+  int32  timeout_ms = 4;
+}
+
+message ExecuteResponse {
+  bool   ok        = 1;
+  string result    = 2;
+  string error     = 3;
+  bool   retryable = 4;
+}
+
+message CancelRequest  { string job_id = 1; }
+message CancelResponse { bool found = 1; }
+message PingRequest    {}
+message PingResponse   { string worker_id = 1; int32 inflight = 2; }
